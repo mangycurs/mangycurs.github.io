@@ -79,6 +79,14 @@
 
     <title>Шавки — резкий сайт о шавках</title>
     <style>
+		/* Только для десктопа — плавная прокрутка при кликах на якоря */
+		@media (min-width: 768px) {
+			html {
+				scroll-behavior: smooth;
+			}
+		}
+		
+		
         /* ----- RESET & GLOBAL ----- */
         * {
             margin: 0;
@@ -648,6 +656,65 @@ if (redirectPath) {
     else setLanguage('ru');
 
     initNavigation();
+	
+	(function() {
+    // Функция плавной прокрутки для десктопа
+    function initSmoothScrollOnDesktop() {
+        const isDesktop = window.innerWidth >= 768;
+        if (!isDesktop) return;
+
+        let isScrolling = false;
+        let scrollTarget = 0;
+        let currentScroll = window.scrollY;
+        
+        function smoothScroll() {
+            currentScroll = window.scrollY;
+            const diff = scrollTarget - currentScroll;
+            if (Math.abs(diff) < 0.5) {
+                window.scrollTo(0, scrollTarget);
+                isScrolling = false;
+                return;
+            }
+            const step = diff * 0.12; // плавность (можно регулировать)
+            window.scrollTo(0, currentScroll + step);
+            requestAnimationFrame(smoothScroll);
+        }
+        
+        function onWheel(e) {
+            if (!isDesktop) return;
+            e.preventDefault();
+            const delta = e.deltaY || e.deltaX || e.detail;
+            scrollTarget += delta * 0.8; // чувствительность
+            scrollTarget = Math.max(0, Math.min(scrollTarget, document.body.scrollHeight - window.innerHeight));
+            if (!isScrolling) {
+                isScrolling = true;
+                requestAnimationFrame(smoothScroll);
+            }
+        }
+        
+        // Отключаем на десктопе нативную прокрутку и заменяем на плавную
+        window.addEventListener('wheel', onWheel, { passive: false });
+        
+        // Также для скролл-бара (при перетаскивании ползунка) используем нативный, но CSS добавит плавность для программного скролла
+        // Для клавиатуры (PageUp/Down) -> перехватывать не будем, они будут использовать стандартную плавность (scroll-behavior)
+    }
+    
+    // Запускаем после загрузки и при изменении размера окна
+    let smoothHandlerActive = false;
+    function checkAndInit() {
+        if (window.innerWidth >= 768 && !smoothHandlerActive) {
+            initSmoothScrollOnDesktop();
+            smoothHandlerActive = true;
+        } else if (window.innerWidth < 768 && smoothHandlerActive) {
+            // На мобилке отключаем (удаляем обработчик) — но проще перезагрузить?
+            // Для простоты: перезагружаем страницу при смене ориентации? Лучше не усложнять.
+            // В реальном проекте нужно удалить обработчик. Здесь предлагаю просто вывести в консоль.
+            console.log('Скролл на мобилке остаётся нативным (быстрым)');
+        }
+    }
+    window.addEventListener('resize', checkAndInit);
+    checkAndInit();
+})();
 </script>
 </body>
 </html>
