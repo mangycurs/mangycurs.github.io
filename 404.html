@@ -160,6 +160,119 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .card, .event-card { animation: fadeInUp 0.4s ease-out forwards; }
         footer { background: var(--footer-bg); border-top: 1px solid var(--border-color); padding: 32px 24px; text-align: center; font-size: 14px; color: var(--text-secondary); }
+		/* Панель для слабовидящих */
+		.bvi-panel {
+			position: fixed;
+			top: -200px;
+			left: 0;
+			right: 0;
+			background: #2c2c2c;
+			color: #fff;
+			padding: 12px 20px;
+			z-index: 10000;
+			transition: top 0.3s ease;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+		.bvi-panel.bvi-active {
+			top: 0;
+		}
+		.bvi-blocks {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 24px;
+			align-items: center;
+		}
+		.bvi-block {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+			background: rgba(255,255,255,0.1);
+			padding: 8px 12px;
+			border-radius: 12px;
+		}
+		.bvi-block-title {
+			font-size: 14px;
+			font-weight: 600;
+			margin-right: 8px;
+		}
+		.bvi-link {
+			cursor: pointer;
+			display: inline-block;
+			padding: 4px 10px;
+			background: rgba(255,255,255,0.2);
+			border-radius: 6px;
+			font-size: 14px;
+			transition: all 0.2s;
+			text-decoration: none;
+			color: #fff;
+		}
+		.bvi-link.active {
+			background: #d42a28;
+			color: white;
+		}
+		.bvi-link:hover {
+			background: #d42a28;
+			color: white;
+		}
+		.speech-icon { font-size: 18px; }
+
+		/* Модальное окно */
+		.bvi-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0,0,0,0.7);
+			z-index: 10001;
+			justify-content: center;
+			align-items: center;
+		}
+		.bvi-modal.active {
+			display: flex;
+		}
+		.bvi-modal-dialog {
+			background: #2c2c2c;
+			border-radius: 16px;
+			max-width: 500px;
+			width: 90%;
+			color: #fff;
+		}
+		.bvi-modal-header {
+			display: flex;
+			justify-content: space-between;
+			padding: 16px 20px;
+			border-bottom: 1px solid #555;
+		}
+		.bvi-modal-title { font-size: 18px; font-weight: bold; }
+		.bvi-modal-close {
+			cursor: pointer;
+			font-size: 24px;
+			line-height: 1;
+		}
+		.bvi-modal-body { padding: 20px; }
+		.bvi-modal-footer { padding: 16px 20px; border-top: 1px solid #555; text-align: right; }
+
+		/* Стили для BVI-режима */
+		body.bvi-active * {
+			transition: all 0.2s ease;
+		}
+		body.bvi-active .card-img {
+			filter: grayscale(0.5);
+		}
+		body.bvi-active .coeff {
+			background: #d42a28;
+		}
+		@media (max-width: 768px) {
+			.bvi-blocks { gap: 12px; }
+			.bvi-block { width: 100%; justify-content: space-between; }
+			.bvi-block-title { width: 100%; margin-bottom: 4px; }
+		}
     </style>
 </head>
 <body>
@@ -178,6 +291,13 @@
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<path d="M4 5h16v2H4V5zm0 4h16v2H4V9zm0 4h10v2H4v-2zm13 0h3v2h-3v-2zm-3 4h6v2h-6v-2z" fill="currentColor"/>
 						<path d="M17 13l4 4-4 4v-3h-4v-2h4v-3z" fill="currentColor"/>
+					</svg>
+				</button>
+				<button class="icon-btn" id="bviToggle" aria-label="Версия для слабовидящих">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 41 41" width="20" height="20">
+						<circle cx="31.5" cy="19.5" r="7.5" stroke="currentColor" stroke-width="2"></circle>
+						<circle cx="9.5" cy="19.5" r="7.5" stroke="currentColor" stroke-width="2"></circle>
+						<path stroke="currentColor" stroke-width="2" d="M15 15c3.333-4 6.667-4 10 0"></path>
 					</svg>
 				</button>
                 <button class="icon-btn" id="themeToggle" aria-label="Тема">
@@ -403,6 +523,291 @@
         }
     });
 })();
+// ========== РЕЖИМ ДЛЯ СЛАБОВИДЯЩИХ (BVI) ==========
+(function() {
+    const bviToggle = document.getElementById('bviToggle');
+    const bviPanel = document.getElementById('bviPanel');
+    const bviModal = document.getElementById('bviModal');
+    const bviModalClose = document.getElementById('bviModalClose');
+    const bviShowModal = document.getElementById('bviShowModal');
+    const bviClosePanel = document.getElementById('bviClosePanel');
+    const bviResetAll = document.getElementById('bviResetAll');
+    const bviResetSettings = document.getElementById('bviResetSettings');
+
+    let bviActive = false;
+    let currentLang = localStorage.getItem('shavki_lang') || 'ru';
+
+    // Функция обновления текстов панели под язык
+    function updateBviLang() {
+        document.querySelectorAll('[data-ru][data-en]').forEach(el => {
+            const text = currentLang === 'ru' ? el.getAttribute('data-ru') : el.getAttribute('data-en');
+            if (text) el.textContent = text;
+        });
+    }
+
+    // Применение всех BVI настроек
+    function applyBviSettings(settings) {
+        const root = document.documentElement;
+        if (settings.fontFamily === 'arial') {
+            document.body.style.fontFamily = "'Segoe UI', 'Arial', sans-serif";
+        } else if (settings.fontFamily === 'times') {
+            document.body.style.fontFamily = "'Times New Roman', Georgia, serif";
+        }
+        document.body.style.fontSize = settings.fontSize + 'px';
+        document.body.style.letterSpacing = settings.letterSpacing;
+        document.body.style.lineHeight = settings.lineHeight;
+        
+        // Цветовые схемы
+        const themes = {
+            white: { bg: '#ffffff', text: '#000000', link: '#0066cc', border: '#cccccc' },
+            black: { bg: '#000000', text: '#ffffff', link: '#66ccff', border: '#444444' },
+            blue: { bg: '#e6f0ff', text: '#000066', link: '#0033cc', border: '#99ccff' },
+            brown: { bg: '#f5e6d3', text: '#3d2b1f', link: '#8b5a2b', border: '#d4b896' },
+            green: { bg: '#e8f5e9', text: '#1b5e20', link: '#2e7d32', border: '#a5d6a7' }
+        };
+        const theme = themes[settings.colorTheme] || themes.white;
+        document.body.style.backgroundColor = theme.bg;
+        document.body.style.color = theme.text;
+        document.body.style.borderColor = theme.border;
+        
+        // Изображения
+        document.querySelectorAll('img').forEach(img => {
+            if (settings.images === 'off') {
+                img.style.filter = 'grayscale(1)';
+                img.style.opacity = '0.5';
+            } else {
+                img.style.filter = '';
+                img.style.opacity = '';
+            }
+        });
+        
+        // Обновить активные классы в панели
+        document.querySelectorAll('.bvi-font-family-arial, .bvi-font-family-times').forEach(el => {
+            el.classList.toggle('active', (el.dataset.font === settings.fontFamily));
+        });
+        document.querySelectorAll('[data-size]').forEach(el => {
+            el.classList.toggle('active', (parseInt(el.dataset.size) === settings.fontSize));
+        });
+        document.querySelectorAll('[data-theme]').forEach(el => {
+            el.classList.toggle('active', (el.dataset.theme === settings.colorTheme));
+        });
+        document.querySelectorAll('[data-letter]').forEach(el => {
+            el.classList.toggle('active', (el.dataset.letter === settings.letterSpacing));
+        });
+        document.querySelectorAll('[data-line]').forEach(el => {
+            el.classList.toggle('active', (el.dataset.line === settings.lineHeight));
+        });
+        document.querySelectorAll('[data-images]').forEach(el => {
+            el.classList.toggle('active', (el.dataset.images === settings.images));
+        });
+    }
+
+    // Синтез речи
+    let speechSynth = window.speechSynthesis;
+    let speechUtterance = null;
+    function speakText(text) {
+        if (!window.speechSynthesis) return;
+        if (speechUtterance) speechSynth.cancel();
+        speechUtterance = new SpeechSynthesisUtterance(text);
+        speechUtterance.lang = currentLang === 'ru' ? 'ru-RU' : 'en-US';
+        speechSynth.speak(speechUtterance);
+    }
+    function stopSpeak() { if (speechSynth) speechSynth.cancel(); }
+
+    // Назначение настроек
+    let bviSettings = {
+        fontFamily: 'arial',
+        fontSize: 24,
+        colorTheme: 'white',
+        letterSpacing: 'normal',
+        lineHeight: '1.4',
+        images: 'off',
+        speech: 'off'
+    };
+
+    function loadBviSettings() {
+        const saved = localStorage.getItem('shavki_bvi_settings');
+        if (saved) {
+            try {
+                bviSettings = JSON.parse(saved);
+            } catch(e) {}
+        }
+        applyBviSettings(bviSettings);
+        if (bviSettings.speech === 'on') {
+            document.querySelector('[data-speech="on"]').classList.add('active');
+            document.querySelector('[data-speech="off"]').classList.remove('active');
+        } else {
+            document.querySelector('[data-speech="off"]').classList.add('active');
+            document.querySelector('[data-speech="on"]').classList.remove('active');
+        }
+    }
+
+    function saveBviSettings() {
+        localStorage.setItem('shavki_bvi_settings', JSON.stringify(bviSettings));
+    }
+
+    function resetBviSettings() {
+        bviSettings = {
+            fontFamily: 'arial',
+            fontSize: 24,
+            colorTheme: 'white',
+            letterSpacing: 'normal',
+            lineHeight: '1.4',
+            images: 'off',
+            speech: 'off'
+        };
+        applyBviSettings(bviSettings);
+        saveBviSettings();
+        if (bviSettings.speech === 'off') stopSpeak();
+    }
+
+    // Открыть/закрыть панель
+    function openBvi() {
+        bviActive = true;
+        document.body.classList.add('bvi-active');
+        bviPanel.classList.add('bvi-active');
+        loadBviSettings();
+    }
+    function closeBvi() {
+        bviActive = false;
+        document.body.classList.remove('bvi-active');
+        bviPanel.classList.remove('bvi-active');
+        resetBviSettings();
+        if (speechUtterance) stopSpeak();
+        document.body.style = '';
+        location.reload(); // полный сброс (простой способ)
+    }
+
+    // Обработчики
+    bviToggle.addEventListener('click', () => {
+        if (bviActive) closeBvi();
+        else openBvi();
+    });
+    bviClosePanel.addEventListener('click', () => closeBvi());
+    bviResetAll.addEventListener('click', () => resetBviSettings());
+    bviResetSettings.addEventListener('click', () => resetBviSettings());
+    bviShowModal.addEventListener('click', () => bviModal.classList.add('active'));
+    bviModalClose.addEventListener('click', () => bviModal.classList.remove('active'));
+    bviModal.addEventListener('click', (e) => { if (e.target === bviModal) bviModal.classList.remove('active'); });
+
+    // Настройки из панели и модалки
+    document.querySelectorAll('[data-font]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.fontFamily = el.dataset.font; applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-size]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.fontSize = parseInt(el.dataset.size); applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-theme]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.colorTheme = el.dataset.theme; applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-letter]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.letterSpacing = el.dataset.letter; applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-line]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.lineHeight = el.dataset.line; applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-images]').forEach(el => {
+        el.addEventListener('click', () => { bviSettings.images = el.dataset.images; applyBviSettings(bviSettings); saveBviSettings(); });
+    });
+    document.querySelectorAll('[data-speech]').forEach(el => {
+        el.addEventListener('click', () => {
+            bviSettings.speech = el.dataset.speech;
+            saveBviSettings();
+            if (bviSettings.speech === 'on') {
+                document.body.addEventListener('click', function speakOnClick(e) {
+                    const text = e.target.innerText || e.target.textContent;
+                    if (text && text.trim()) speakText(text.trim());
+                });
+            } else {
+                stopSpeak();
+                document.body.removeEventListener('click', speakOnClick);
+            }
+        });
+    });
+
+    // Смена языка и обновление панели
+    window.updateBviLang = updateBviLang;
+    const originalSetLanguage = window.setLanguage;
+    if (originalSetLanguage) {
+        window.setLanguage = function(lang) {
+            currentLang = lang;
+            originalSetLanguage(lang);
+            updateBviLang();
+        };
+    }
+    updateBviLang();
+})();
 </script>
+<!-- Панель для слабовидящих -->
+<div id="bviPanel" class="bvi-panel">
+    <div class="bvi-blocks bvi-block-center">
+        <div class="bvi-block bvi-block-font">
+            <div class="bvi-block-title" data-ru="Шрифт:" data-en="Font:">Шрифт:</div>
+            <a class="bvi-link bvi-font-family-arial active" data-font="arial">Аб</a>
+            <a class="bvi-link bvi-font-family-times" data-font="times">Аб</a>
+        </div>
+        <div class="bvi-block bvi-block-fontSize">
+            <div class="bvi-block-title" data-ru="Размер шрифта:" data-en="Font size:">Размер шрифта:</div>
+            <a class="bvi-link bvi-font-size-small active" data-size="24">Аб</a>
+            <a class="bvi-link bvi-font-size-middle" data-size="32">Аб</a>
+            <a class="bvi-link bvi-font-size-big" data-size="40">Аб</a>
+        </div>
+        <div class="bvi-block bvi-block-color">
+            <div class="bvi-block-title" data-ru="Цветовая схема:" data-en="Color scheme:">Цветовая схема:</div>
+            <a class="bvi-link bvi-theme-white active" data-theme="white">А</a>
+            <a class="bvi-link bvi-theme-black" data-theme="black">А</a>
+            <a class="bvi-link bvi-theme-blue" data-theme="blue">А</a>
+            <a class="bvi-link bvi-theme-brown" data-theme="brown">А</a>
+            <a class="bvi-link bvi-theme-green" data-theme="green">А</a>
+        </div>
+        <div class="bvi-block bvi-block-speech">
+            <div class="bvi-block-title" data-ru="Синтез речи:" data-en="Speech:">Синтез речи:</div>
+            <a class="bvi-link bvi-speech-off active" data-speech="off"><span class="speech-icon">🔇</span></a>
+            <a class="bvi-link bvi-speech-on" data-speech="on"><span class="speech-icon">🔊</span></a>
+        </div>
+        <div class="bvi-block bvi-block-settings">
+            <div class="bvi-block-title" data-ru="Настройки" data-en="Settings">Настройки</div>
+            <a class="bvi-link" id="bviShowModal" data-bvi="modal"><span class="speech-icon">⚙️</span></a>
+            <a class="bvi-link" id="bviResetAll" data-bvi="reset">Сбросить</a>
+            <a class="bvi-link" id="bviClosePanel" data-bvi="close">Закрыть</a>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно с доп. настройками -->
+<div id="bviModal" class="bvi-modal">
+    <div class="bvi-modal-dialog">
+        <div class="bvi-modal-content">
+            <div class="bvi-modal-header">
+                <div class="bvi-modal-title" data-ru="Дополнительные настройки" data-en="Advanced settings">Дополнительные настройки</div>
+                <a href="#" class="bvi-link bvi-modal-close" id="bviModalClose">×</a>
+            </div>
+            <div class="bvi-modal-body">
+                <div class="bvi-blocks bvi-block-center">
+                    <div class="bvi-block">
+                        <div class="bvi-block-title" data-ru="Межбуквенное расстояние" data-en="Letter spacing:">Межбуквенное расстояние</div>
+                        <a class="bvi-link bvi-letter-spacing-normal active" data-letter="normal">Стандартный</a>
+                        <a class="bvi-link bvi-letter-spacing-average" data-letter="0.05em">Средний</a>
+                        <a class="bvi-link bvi-letter-spacing-big" data-letter="0.1em">Большой</a>
+                    </div>
+                    <div class="bvi-block">
+                        <div class="bvi-block-title" data-ru="Межстрочный интервал" data-en="Line height:">Межстрочный интервал</div>
+                        <a class="bvi-link bvi-line-height-normal active" data-line="1.4">Стандартный</a>
+                        <a class="bvi-link bvi-line-height-average" data-line="1.8">Средний</a>
+                        <a class="bvi-link bvi-line-height-big" data-line="2.2">Большой</a>
+                    </div>
+                    <div class="bvi-block">
+                        <div class="bvi-block-title" data-ru="Изображения" data-en="Images:">Изображения</div>
+                        <a class="bvi-link bvi-images-on" data-images="on">Включить</a>
+                        <a class="bvi-link bvi-images-off active" data-images="off">Выключить</a>
+                    </div>
+                </div>
+            </div>
+            <div class="bvi-modal-footer">
+                <a href="#" class="bvi-link" id="bviResetSettings">Сбросить все настройки</a>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
