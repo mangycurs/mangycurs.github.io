@@ -453,6 +453,22 @@
 </div>
 
 <script>
+// Восстановление маршрута при загрузке 404.html
+(function() {
+    const path = window.location.pathname;
+    if (path !== '/' && !path.includes('index.html')) {
+        // Сохраняем путь, чтобы index.html его прочитал
+        sessionStorage.setItem('spa_redirect', path);
+        window.location.replace('/');
+    }
+})();
+const redirectPath = sessionStorage.getItem('spa_redirect');
+if (redirectPath) {
+    sessionStorage.removeItem('spa_redirect');
+    const page = redirectPath.slice(1) || 'home';
+    renderPage(page);
+    history.replaceState({ page }, '', redirectPath);
+}
     // ---------- БАЗА ДАННЫХ ПЕРЕВОДОВ ----------
     const translations = {
         ru: {
