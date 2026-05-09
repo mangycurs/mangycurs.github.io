@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /assets/favicon/
+Disallow: /assets/logo/
+Disallow: /404.html
+
+Sitemap: https://mangycurs.github.io/sitemap.xml
+
+Host: https://mangycurs.github.io
+
+Crawl-delay: 0.5
