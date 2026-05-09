@@ -1137,5 +1137,14 @@
 			window.updateBviLang();
 		})();
     </script>
+	<script>
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/sw.js').then(reg => {
+			console.log('Service Worker зареган, ура!', reg);
+		}).catch(err => {
+			console.error('Пиздец, SW не встал:', err);
+		});
+	}
+	</script>
 </body>
 </html>
