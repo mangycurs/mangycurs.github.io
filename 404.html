@@ -520,6 +520,14 @@
             .bvi-block { width: 100%; justify-content: space-between; }
             .bvi-block-title { width: 100%; margin-bottom: 4px; }
         }
+		/* Фикс для мобильной версии – кнопка закрытия BVI */
+		@media (max-width: 768px) {
+			.bvi-link[data-bvi="close"] {
+				background: #d42a28;
+				font-weight: bold;
+				padding: 6px 12px;
+			}
+		}
     </style>
 </head>
 <body>
@@ -922,208 +930,167 @@
             });
         })();
 
-        // ---------- РЕЖИМ ДЛЯ СЛАБОВИДЯЩИХ (BVI) ----------
-        (function() {
-            const bviToggle = document.getElementById('bviToggle');
-            const bviPanel = document.getElementById('bviPanel');
-            const bviModal = document.getElementById('bviModal');
-            const bviModalClose = document.getElementById('bviModalClose');
-            const bviShowModal = document.getElementById('bviShowModal');
-            const bviClosePanel = document.getElementById('bviClosePanel');
-            const bviResetAll = document.getElementById('bviResetAll');
-            const bviResetSettings = document.getElementById('bviResetSettings');
+		// ========== РЕЖИМ ДЛЯ СЛАБОВИДЯЩИХ (BVI) – РАБОЧИЙ НА ВСЕХ УСТРОЙСТВАХ ==========
+		(function() {
+			const bviToggle = document.getElementById('bviToggle');
+			const bviPanel = document.getElementById('bviPanel');
+			const bviModal = document.getElementById('bviModal');
+			const bviModalClose = document.getElementById('bviModalClose');
+			const bviShowModal = document.getElementById('bviShowModal');
+			const bviClosePanel = document.getElementById('bviClosePanel');
+			const bviResetAll = document.getElementById('bviResetAll');
+			const bviResetSettings = document.getElementById('bviResetSettings');
 
-            let bviActive = false;
-            let currentLangBvi = localStorage.getItem('shavki_lang') || 'ru';
+			if (!bviToggle || !bviPanel) return;
 
-            // Функция обновления текстов панели под язык
-            window.updateBviLang = function() {
-                currentLangBvi = localStorage.getItem('shavki_lang') || 'ru';
-                document.querySelectorAll('[data-ru][data-en]').forEach(el => {
-                    const text = currentLangBvi === 'ru' ? el.getAttribute('data-ru') : el.getAttribute('data-en');
-                    if (text) el.textContent = text;
-                });
-            };
+			let bviActive = false;
+			let currentLangBvi = localStorage.getItem('shavki_lang') || 'ru';
 
-            // Применение всех BVI настроек
-            function applyBviSettings(settings) {
-                if (settings.fontFamily === 'arial') {
-                    document.body.style.fontFamily = "'Segoe UI', 'Arial', sans-serif";
-                } else if (settings.fontFamily === 'times') {
-                    document.body.style.fontFamily = "'Times New Roman', Georgia, serif";
-                }
-                document.body.style.fontSize = settings.fontSize + 'px';
-                document.body.style.letterSpacing = settings.letterSpacing;
-                document.body.style.lineHeight = settings.lineHeight;
-                
-                const themes = {
-                    white: { bg: '#ffffff', text: '#000000', link: '#0066cc', border: '#cccccc' },
-                    black: { bg: '#000000', text: '#ffffff', link: '#66ccff', border: '#444444' },
-                    blue: { bg: '#e6f0ff', text: '#000066', link: '#0033cc', border: '#99ccff' },
-                    brown: { bg: '#f5e6d3', text: '#3d2b1f', link: '#8b5a2b', border: '#d4b896' },
-                    green: { bg: '#e8f5e9', text: '#1b5e20', link: '#2e7d32', border: '#a5d6a7' }
-                };
-                const theme = themes[settings.colorTheme] || themes.white;
-                document.body.style.backgroundColor = theme.bg;
-                document.body.style.color = theme.text;
-                document.body.style.borderColor = theme.border;
-                
-                document.querySelectorAll('img').forEach(img => {
-                    if (settings.images === 'off') {
-                        img.style.filter = 'grayscale(1)';
-                        img.style.opacity = '0.5';
-                    } else {
-                        img.style.filter = '';
-                        img.style.opacity = '';
-                    }
-                });
-                
-                document.querySelectorAll('.bvi-font-family-arial, .bvi-font-family-times').forEach(el => {
-                    el.classList.toggle('active', (el.dataset.font === settings.fontFamily));
-                });
-                document.querySelectorAll('[data-size]').forEach(el => {
-                    el.classList.toggle('active', (parseInt(el.dataset.size) === settings.fontSize));
-                });
-                document.querySelectorAll('[data-theme]').forEach(el => {
-                    el.classList.toggle('active', (el.dataset.theme === settings.colorTheme));
-                });
-                document.querySelectorAll('[data-letter]').forEach(el => {
-                    el.classList.toggle('active', (el.dataset.letter === settings.letterSpacing));
-                });
-                document.querySelectorAll('[data-line]').forEach(el => {
-                    el.classList.toggle('active', (el.dataset.line === settings.lineHeight));
-                });
-                document.querySelectorAll('[data-images]').forEach(el => {
-                    el.classList.toggle('active', (el.dataset.images === settings.images));
-                });
-            }
+			window.updateBviLang = function() {
+				currentLangBvi = localStorage.getItem('shavki_lang') || 'ru';
+				document.querySelectorAll('[data-ru][data-en]').forEach(el => {
+					const text = currentLangBvi === 'ru' ? el.getAttribute('data-ru') : el.getAttribute('data-en');
+					if (text) el.textContent = text;
+				});
+			};
 
-            let speechSynth = window.speechSynthesis;
-            let speechUtterance = null;
-            function speakText(text) {
-                if (!window.speechSynthesis) return;
-                if (speechUtterance) speechSynth.cancel();
-                speechUtterance = new SpeechSynthesisUtterance(text);
-                speechUtterance.lang = currentLangBvi === 'ru' ? 'ru-RU' : 'en-US';
-                speechSynth.speak(speechUtterance);
-            }
-            function stopSpeak() { if (speechSynth) speechSynth.cancel(); }
+			function applyBviSettings(settings) {
+				if (settings.fontFamily === 'arial') {
+					document.body.style.fontFamily = "'Segoe UI', 'Arial', sans-serif";
+				} else if (settings.fontFamily === 'times') {
+					document.body.style.fontFamily = "'Times New Roman', Georgia, serif";
+				}
+				document.body.style.fontSize = settings.fontSize + 'px';
+				document.body.style.letterSpacing = settings.letterSpacing;
+				document.body.style.lineHeight = settings.lineHeight;
+				
+				const themes = {
+					white: { bg: '#ffffff', text: '#000000', link: '#0066cc', border: '#cccccc' },
+					black: { bg: '#000000', text: '#ffffff', link: '#66ccff', border: '#444444' },
+					blue: { bg: '#e6f0ff', text: '#000066', link: '#0033cc', border: '#99ccff' },
+					brown: { bg: '#f5e6d3', text: '#3d2b1f', link: '#8b5a2b', border: '#d4b896' },
+					green: { bg: '#e8f5e9', text: '#1b5e20', link: '#2e7d32', border: '#a5d6a7' }
+				};
+				const theme = themes[settings.colorTheme] || themes.white;
+				document.body.style.backgroundColor = theme.bg;
+				document.body.style.color = theme.text;
+				document.body.style.borderColor = theme.border;
+				
+				document.querySelectorAll('img').forEach(img => {
+					img.style.filter = settings.images === 'off' ? 'grayscale(1)' : '';
+					img.style.opacity = settings.images === 'off' ? '0.5' : '';
+				});
+				
+				document.querySelectorAll('.bvi-font-family-arial, .bvi-font-family-times').forEach(el => {
+					el.classList.toggle('active', el.dataset.font === settings.fontFamily);
+				});
+				document.querySelectorAll('[data-size]').forEach(el => {
+					el.classList.toggle('active', parseInt(el.dataset.size) === settings.fontSize);
+				});
+				document.querySelectorAll('[data-theme]').forEach(el => {
+					el.classList.toggle('active', el.dataset.theme === settings.colorTheme);
+				});
+				document.querySelectorAll('[data-letter]').forEach(el => {
+					el.classList.toggle('active', el.dataset.letter === settings.letterSpacing);
+				});
+				document.querySelectorAll('[data-line]').forEach(el => {
+					el.classList.toggle('active', el.dataset.line === settings.lineHeight);
+				});
+				document.querySelectorAll('[data-images]').forEach(el => {
+					el.classList.toggle('active', el.dataset.images === settings.images);
+				});
+			}
 
-            let bviSettings = {
-                fontFamily: 'arial',
-                fontSize: 24,
-                colorTheme: 'white',
-                letterSpacing: 'normal',
-                lineHeight: '1.4',
-                images: 'off',
-                speech: 'off'
-            };
+			let speechSynth = window.speechSynthesis;
+			let speechUtterance = null;
+			let speechClickHandler = null;
+			function speakText(text) {
+				if (!window.speechSynthesis) return;
+				if (speechUtterance) speechSynth.cancel();
+				speechUtterance = new SpeechSynthesisUtterance(text);
+				speechUtterance.lang = currentLangBvi === 'ru' ? 'ru-RU' : 'en-US';
+				speechSynth.speak(speechUtterance);
+			}
+			function stopSpeak() { if (speechSynth) speechSynth.cancel(); }
 
-            function loadBviSettings() {
-                const saved = localStorage.getItem('shavki_bvi_settings');
-                if (saved) {
-                    try {
-                        bviSettings = JSON.parse(saved);
-                    } catch(e) {}
-                }
-                applyBviSettings(bviSettings);
-                if (bviSettings.speech === 'on') {
-                    const onBtn = document.querySelector('[data-speech="on"]');
-                    const offBtn = document.querySelector('[data-speech="off"]');
-                    if (onBtn) onBtn.classList.add('active');
-                    if (offBtn) offBtn.classList.remove('active');
-                } else {
-                    const offBtn = document.querySelector('[data-speech="off"]');
-                    const onBtn = document.querySelector('[data-speech="on"]');
-                    if (offBtn) offBtn.classList.add('active');
-                    if (onBtn) onBtn.classList.remove('active');
-                }
-            }
+			let bviSettings = {
+				fontFamily: 'arial', fontSize: 24, colorTheme: 'white',
+				letterSpacing: 'normal', lineHeight: '1.4', images: 'off', speech: 'off'
+			};
 
-            function saveBviSettings() {
-                localStorage.setItem('shavki_bvi_settings', JSON.stringify(bviSettings));
-            }
+			function loadBviSettings() {
+				const saved = localStorage.getItem('shavki_bvi_settings');
+				if (saved) try { bviSettings = JSON.parse(saved); } catch(e) {}
+				applyBviSettings(bviSettings);
+				const onBtn = document.querySelector('[data-speech="on"]');
+				const offBtn = document.querySelector('[data-speech="off"]');
+				if (bviSettings.speech === 'on') {
+					if (onBtn) onBtn.classList.add('active');
+					if (offBtn) offBtn.classList.remove('active');
+					if (!speechClickHandler) {
+						speechClickHandler = (e) => {
+							const text = e.target.innerText || e.target.textContent;
+							if (text && text.trim() && text.length < 300) speakText(text.trim());
+						};
+						document.body.addEventListener('click', speechClickHandler);
+					}
+				} else {
+					if (offBtn) offBtn.classList.add('active');
+					if (onBtn) onBtn.classList.remove('active');
+					if (speechClickHandler) {
+						document.body.removeEventListener('click', speechClickHandler);
+						speechClickHandler = null;
+					}
+				}
+			}
 
-            function resetBviSettings() {
-                bviSettings = {
-                    fontFamily: 'arial',
-                    fontSize: 24,
-                    colorTheme: 'white',
-                    letterSpacing: 'normal',
-                    lineHeight: '1.4',
-                    images: 'off',
-                    speech: 'off'
-                };
-                applyBviSettings(bviSettings);
-                saveBviSettings();
-                if (bviSettings.speech === 'off') stopSpeak();
-            }
+			function saveBviSettings() { localStorage.setItem('shavki_bvi_settings', JSON.stringify(bviSettings)); }
+			function resetBviSettings() {
+				bviSettings = { fontFamily: 'arial', fontSize: 24, colorTheme: 'white', letterSpacing: 'normal', lineHeight: '1.4', images: 'off', speech: 'off' };
+				applyBviSettings(bviSettings);
+				saveBviSettings();
+				if (bviSettings.speech === 'off') stopSpeak();
+			}
+			function openBvi() {
+				bviActive = true;
+				document.body.classList.add('bvi-active');
+				bviPanel.classList.add('bvi-active');
+				loadBviSettings();
+			}
+			function closeBvi() {
+				bviActive = false;
+				document.body.classList.remove('bvi-active');
+				bviPanel.classList.remove('bvi-active');
+				resetBviSettings();
+				if (speechUtterance) stopSpeak();
+				document.body.style.cssText = '';
+				if (typeof setTheme === 'function') setTheme(currentTheme);
+				if (typeof setLanguage === 'function') setLanguage(currentLang);
+			}
 
-            function openBvi() {
-                bviActive = true;
-                document.body.classList.add('bvi-active');
-                bviPanel.classList.add('bvi-active');
-                loadBviSettings();
-            }
-            function closeBvi() {
-                bviActive = false;
-                document.body.classList.remove('bvi-active');
-                bviPanel.classList.remove('bvi-active');
-                resetBviSettings();
-                if (speechUtterance) stopSpeak();
-                document.body.style = '';
-                location.reload();
-            }
+			bviToggle.addEventListener('click', (e) => { e.preventDefault(); bviActive ? closeBvi() : openBvi(); });
+			if (bviClosePanel) bviClosePanel.addEventListener('click', (e) => { e.preventDefault(); closeBvi(); });
+			if (bviResetAll) bviResetAll.addEventListener('click', (e) => { e.preventDefault(); resetBviSettings(); });
+			if (bviResetSettings) bviResetSettings.addEventListener('click', (e) => { e.preventDefault(); resetBviSettings(); });
+			if (bviShowModal) bviShowModal.addEventListener('click', (e) => { e.preventDefault(); if (bviModal) bviModal.classList.add('active'); });
+			if (bviModalClose) bviModalClose.addEventListener('click', (e) => { e.preventDefault(); if (bviModal) bviModal.classList.remove('active'); });
+			if (bviModal) bviModal.addEventListener('click', (e) => { if (e.target === bviModal) bviModal.classList.remove('active'); });
 
-            if (bviToggle) {
-                bviToggle.addEventListener('click', () => {
-                    if (bviActive) closeBvi();
-                    else openBvi();
-                });
-            }
-            if (bviClosePanel) bviClosePanel.addEventListener('click', () => closeBvi());
-            if (bviResetAll) bviResetAll.addEventListener('click', () => resetBviSettings());
-            if (bviResetSettings) bviResetSettings.addEventListener('click', () => resetBviSettings());
-            if (bviShowModal) bviShowModal.addEventListener('click', () => bviModal.classList.add('active'));
-            if (bviModalClose) bviModalClose.addEventListener('click', () => bviModal.classList.remove('active'));
-            if (bviModal) bviModal.addEventListener('click', (e) => { if (e.target === bviModal) bviModal.classList.remove('active'); });
+			document.querySelectorAll('[data-font]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.fontFamily = el.dataset.font; applyBviSettings(bviSettings); saveBviSettings(); }));
+			document.querySelectorAll('[data-size]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.fontSize = parseInt(el.dataset.size); applyBviSettings(bviSettings); saveBviSettings(); }));
+			document.querySelectorAll('[data-theme]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.colorTheme = el.dataset.theme; applyBviSettings(bviSettings); saveBviSettings(); }));
+			document.querySelectorAll('[data-letter]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.letterSpacing = el.dataset.letter; applyBviSettings(bviSettings); saveBviSettings(); }));
+			document.querySelectorAll('[data-line]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.lineHeight = el.dataset.line; applyBviSettings(bviSettings); saveBviSettings(); }));
+			document.querySelectorAll('[data-images]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); bviSettings.images = el.dataset.images; applyBviSettings(bviSettings); saveBviSettings(); }));
 
-            document.querySelectorAll('[data-font]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.fontFamily = el.dataset.font; applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-size]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.fontSize = parseInt(el.dataset.size); applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-theme]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.colorTheme = el.dataset.theme; applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-letter]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.letterSpacing = el.dataset.letter; applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-line]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.lineHeight = el.dataset.line; applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-images]').forEach(el => {
-                el.addEventListener('click', () => { bviSettings.images = el.dataset.images; applyBviSettings(bviSettings); saveBviSettings(); });
-            });
-            document.querySelectorAll('[data-speech]').forEach(el => {
-                el.addEventListener('click', () => {
-                    bviSettings.speech = el.dataset.speech;
-                    saveBviSettings();
-                    if (bviSettings.speech === 'on') {
-                        document.body.addEventListener('click', function speakOnClick(e) {
-                            const text = e.target.innerText || e.target.textContent;
-                            if (text && text.trim()) speakText(text.trim());
-                        });
-                    } else {
-                        stopSpeak();
-                        document.body.removeEventListener('click', speakOnClick);
-                    }
-                });
-            });
-
-            window.updateBviLang();
-        })();
+			// При загрузке панель скрыта, стили сброшены
+			bviPanel.classList.remove('bvi-active');
+			document.body.classList.remove('bvi-active');
+			document.body.style.cssText = '';
+			if (typeof setTheme === 'function') setTheme(currentTheme);
+			if (typeof setLanguage === 'function') setLanguage(currentLang);
+			window.updateBviLang();
+		})();
     </script>
 </body>
 </html>
