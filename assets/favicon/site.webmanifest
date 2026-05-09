@@ -15,28 +15,28 @@
   "prefer_related_applications": false,
   "related_applications": [],
   "shortcuts": [
-    {
-      "name": "Главная",
-      "short_name": "Главная",
-      "description": "Перейти на главную страницу",
-      "url": "/",
-      "icons": [{ "src": "/assets/favicon/favicon-96x96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Породы",
-      "short_name": "Породы",
-      "description": "Смотреть породы собак",
-      "url": "/breeds",
-      "icons": [{ "src": "/assets/favicon/android-chrome-96x96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "События",
-      "short_name": "События",
-      "description": "Топ-события и ставки",
-      "url": "/events",
-      "icons": [{ "src": "/assets/favicon/favicon-32x32.png", "sizes": "32x32" }]
-    }
-  ],
+	  {
+		"name": "Главная",
+		"short_name": "Главная",
+		"description": "Перейти на главную страницу",
+		"url": "/",
+		"icons": [{ "src": "/assets/favicon/android-chrome-96x96.png", "sizes": "96x96" }]
+	  },
+	  {
+		"name": "Породы",
+		"short_name": "Породы",
+		"description": "Смотреть породы собак",
+		"url": "/breeds",
+		"icons": [{ "src": "/assets/favicon/android-chrome-96x96.png", "sizes": "96x96" }]
+	  },
+	  {
+		"name": "События",
+		"short_name": "События",
+		"description": "Топ-события и ставки",
+		"url": "/events",
+		"icons": [{ "src": "/assets/favicon/android-chrome-96x96.png", "sizes": "96x96" }]
+	  }
+	],
   "icons": [
     {
       "src": "/assets/favicon/favicon-16x16.png",
