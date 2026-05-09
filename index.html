@@ -79,6 +79,26 @@
 
     <title>Шавки — резкий сайт о шавках</title>
     <style>
+	/* Принудительный мобильный режим (даже на десктопе) */
+	html.force-mobile .nav-links {
+		display: none;
+	}
+	html.force-mobile .mobile-tabbar {
+		display: flex;
+	}
+	html.force-mobile .header-container {
+		height: 56px;
+	}
+	html.force-mobile .main-content {
+		padding: 20px 16px 80px;
+	}
+	html.force-mobile .section-title {
+		font-size: 24px;
+	}
+	html.force-mobile .cards-grid {
+		grid-template-columns: 1fr;
+	}
+	/* Добавьте сюда любые другие стили, которые были в @media (max-width: 767px) */
 		/* Только для десктопа — плавная прокрутка при кликах на якоря */
 		@media (min-width: 768px) {
 			html {
@@ -417,6 +437,12 @@
                 <a href="#" data-page="about">О нас</a>
             </div>
             <div class="controls">
+				<button class="icon-btn" id="versionToggle" aria-label="Переключить версию">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M4 5h16v2H4V5zm0 4h16v2H4V9zm0 4h10v2H4v-2zm13 0h3v2h-3v-2zm-3 4h6v2h-6v-2z" fill="currentColor"/>
+						<path d="M17 13l4 4-4 4v-3h-4v-2h4v-3z" fill="currentColor"/>
+					</svg>
+				</button>
                 <button class="icon-btn" id="themeToggle" aria-label="Тема">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 3V4M12 20V21M21 12H20M4 12H3M18.364 5.63604L17.657 6.34315M6.34315 17.6569L5.63604 18.364M18.364 18.364L17.657 17.657M6.34315 6.34315L5.63604 5.63604M16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -714,6 +740,31 @@ if (redirectPath) {
     }
     window.addEventListener('resize', checkAndInit);
     checkAndInit();
+})();
+
+// Переключение между десктопной и мобильной версией
+(function() {
+    const versionToggle = document.getElementById('versionToggle');
+    if (!versionToggle) return;
+
+    // Проверяем сохранённый режим
+    const savedMode = localStorage.getItem('shavki_view_mode');
+    if (savedMode === 'mobile') {
+        document.documentElement.classList.add('force-mobile');
+    } else if (savedMode === 'desktop') {
+        document.documentElement.classList.remove('force-mobile');
+    }
+
+    versionToggle.addEventListener('click', () => {
+        const html = document.documentElement;
+        if (html.classList.contains('force-mobile')) {
+            html.classList.remove('force-mobile');
+            localStorage.setItem('shavki_view_mode', 'desktop');
+        } else {
+            html.classList.add('force-mobile');
+            localStorage.setItem('shavki_view_mode', 'mobile');
+        }
+    });
 })();
 </script>
 </body>
